@@ -15,15 +15,7 @@ class Program
     {
         Client = new RevoltClient(Environment.GetEnvironmentVariable("REVOLT_BOT_TOKEN"), ClientMode.WebSocket, new ClientConfig
         {
-            UserBot = true,
-            Debug = new ClientDebugConfig
-            {
-                LogRestRequest = true,
-                LogRestRequestJson = true,
-                LogRestResponseJson = true,
-                LogWebSocketError = true,
-                LogWebSocketFull = true
-            }
+            UserBot = true
         });
         await Client.StartAsync();
         CommandHandler Commands = new CommandHandler(Client);
