@@ -35,9 +35,9 @@ class Program
 
         await Task.Delay(-1);
     }
-    public static async Task<bool> EmoteExists(this string emoteName){
-        return false;
-    }
+    // public static async Task<bool> EmoteExists(this string emoteName){
+    //     return false;
+    // }
     public static async Task<byte[]> GetImage(Uri uri)
     {
         using var httpClient = new HttpClient();
