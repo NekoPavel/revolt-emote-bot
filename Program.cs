@@ -50,6 +50,10 @@ public class CommandHandler
 }
 public partial class AddEmoteCmd : ModuleBase
 {
+    [Command ("ping")]
+    public async Task Ping(){
+        await ReplyAsync("Pong");
+    }
     [Command("yoink")]
     public async Task Yoink([Remainder] string emoteLink)
     {
