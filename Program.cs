@@ -56,7 +56,7 @@ public class Program
         {
             emoteUrl = new($"https://cdn.7tv.app/emote/{emoteId}/{i}]x.webp");
             image = await GetImage(emoteUrl);
-            if (image.Length <= 500000)
+            if (image.Length <= 512000)
             {
                 return image;
             }
