@@ -109,9 +109,16 @@ public partial class AddEmoteCmd : ModuleBase
             return;
         }
         string emoteId = emoteLink.Split("/")[^1].Trim();
-        
-        
-        byte [] image = await Program.EmoteIdToImage(emoteId);
+        byte[] image;
+        try
+        {
+            image = await Program.EmoteIdToImage(emoteId);
+        }
+        catch (Exception ex)
+        {
+            await ReplyAsync(ex.Message);
+            return;
+        }
         Uri emoteInfoUri = new($"https://api.7tv.app/v2/emotes/{emoteId}");
         string json;
         string emoteName;
