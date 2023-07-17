@@ -106,7 +106,7 @@ public partial class AddEmoteCmd : ModuleBase
         try
         {
             Emoji newEmoji = await Context.Server.CreateEmojiAsync(image,$"{emoteName}.webp",emoteName);
-            await ReplyAsync($"Yoinked {emoteName} :{newEmoji.Id}:");
+            await ReplyAsync($"Added `{emoteName}` to the server! :{newEmoji.Id}:");
         }
         catch
         {
