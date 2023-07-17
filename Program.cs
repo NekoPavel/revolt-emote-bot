@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 
 class Program
 {
-    public static readonly bool debug = bool.Parse(Environment.GetEnvironmentVariable("BOT_DEBUG")) ;
+    public static readonly bool debug = bool.Parse(Environment.GetEnvironmentVariable("BOT_DEBUG"));
     static void Main(string[] args)
     {
         Start().GetAwaiter().GetResult();
@@ -17,7 +17,7 @@ class Program
     public static RevoltClient Client;
     public static async Task Start()
     {
-        
+
         string token = Environment.GetEnvironmentVariable("REVOLT_BOT_TOKEN") ?? throw new ArgumentException("No token in enviorment");
         Client = new RevoltClient(token, ClientMode.WebSocket, new ClientConfig
         {
@@ -36,6 +36,35 @@ class Program
         Commands.Service.AddModulesAsync(Assembly.GetEntryAssembly(), null);
 
         await Task.Delay(-1);
+    }
+    public static async Task<byte[]> GetImage(Uri uri)
+    {
+        using var httpClient = new HttpClient();
+        using HttpResponseMessage response = await httpClient.GetAsync(uri);
+        return await response.Content.ReadAsByteArrayAsync();
+    }
+    public static async Task<byte[]> EmoteIdToImage(string emoteId){
+        Uri emoteUrl = new($"https://cdn.7tv.app/emote/{emoteId}/3x.webp");
+        byte[] image = await GetImage(emoteUrl);
+        if (image.Length > 500000)
+        {
+            emoteUrl = new($"https://cdn.7tv.app/emote/{emoteId}/2x.webp");
+            image = await GetImage(emoteUrl);
+        }
+        if (image.Length > 500000)
+        {
+            emoteUrl = new($"https://cdn.7tv.app/emote/{emoteId}/1x.webp");
+            image = await GetImage(emoteUrl);
+        }
+        if (image.Length > 500000)
+        {
+            throw new Exception("Image too large");
+        }
+        if (debug)
+        {
+            Console.WriteLine("Using following url to get emote: " + emoteUrl);
+        }
+        return image;
     }
 }
 public class CommandHandler
@@ -58,10 +87,12 @@ public class CommandHandler
         _ = Service.ExecuteAsync(context, argPos, null);
     }
 }
+
 public partial class AddEmoteCmd : ModuleBase
 {
-    [Command ("ping")]
-    public async Task Ping(){
+    [Command("ping")]
+    public async Task Ping()
+    {
         await ReplyAsync("Pong");
     }
     [Command("yoink")]
@@ -78,17 +109,9 @@ public partial class AddEmoteCmd : ModuleBase
             return;
         }
         string emoteId = emoteLink.Split("/")[^1].Trim();
-        string emoteUrl = $"https://cdn.7tv.app/emote/{emoteId}/3x.webp";
-        if (Program.debug)
-        {
-            Console.WriteLine("Log of emoteURL: " + emoteUrl);
-        }
-        byte[] image;
-        using (var httpClient = new HttpClient())
-        using (HttpResponseMessage response = await httpClient.GetAsync(emoteUrl))
-        {
-            image = await response.Content.ReadAsByteArrayAsync();
-        }
+        
+        
+        byte [] image = await Program.EmoteIdToImage(emoteId);
         Uri emoteInfoUri = new($"https://api.7tv.app/v2/emotes/{emoteId}");
         string json;
         string emoteName;
@@ -96,7 +119,7 @@ public partial class AddEmoteCmd : ModuleBase
         using (HttpResponseMessage response = await httpClient.GetAsync(emoteInfoUri))
         {
             json = await response.Content.ReadAsStringAsync();
-            
+
             dynamic emoteInfo = JObject.Parse(json);
             emoteName = emoteInfo.name;
             emoteName = emoteName.ToLower();
@@ -105,14 +128,14 @@ public partial class AddEmoteCmd : ModuleBase
         //byte[] image = File.ReadAllBytes("pagmanbounce.webp");
         try
         {
-            Emoji newEmoji = await Context.Server.CreateEmojiAsync(image,$"{emoteName}.webp",emoteName);
+            Emoji newEmoji = await Context.Server.CreateEmojiAsync(image, $"{emoteName}.webp", emoteName);
             await ReplyAsync($"Added `{emoteName}` to the server! :{newEmoji.Id}:");
         }
         catch
         {
             await ReplyAsync("Something went wrong while uploading the emote! ");
         }
-        
+
         //FileAttachment FileAttachment = await Context.Channel.UploadFileAsync(image, "pagmanbounce.webp", UploadFileType.Emoji);
 
         //Emoji test = await Context.Server.CreateEmojiAsync(FileAttachment.Id, "pagmanbounce", false);
