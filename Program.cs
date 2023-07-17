@@ -59,12 +59,12 @@ public partial class AddEmoteCmd : ModuleBase
     {
         if (emoteLink == null)
         {
-            await ReplyAsync("You need to provide an emote to yoink! " + Context.User.Username);
+            await ReplyAsync("You need to provide an emote to yoink! ");
             return;
         }
         if (EmoteRegex().Match(emoteLink) == null)
         {
-            await ReplyAsync("That's not a valid emote! " + Context.User.Username);
+            await ReplyAsync("That's not a valid emote! ");
             return;
         }
         string emoteId = emoteLink.Split("/")[^1];
@@ -92,12 +92,12 @@ public partial class AddEmoteCmd : ModuleBase
         //byte[] image = File.ReadAllBytes("pagmanbounce.webp");
         try
         {
-            await Context.Server.CreateEmojiAsync(image,$"{emoteName}.webp",emoteName);
-            await ReplyAsync($"Yoinked {emoteName} " + Context.User.Username);
+            Emoji newEmoji = await Context.Server.CreateEmojiAsync(image,$"{emoteName}.webp",emoteName);
+            await ReplyAsync($"Yoinked {emoteName} :{newEmoji.Id}:");
         }
         catch
         {
-            await ReplyAsync("Something went wrong while uploading the emote! " + Context.User.Username);
+            await ReplyAsync("Something went wrong while uploading the emote! ");
         }
         
         //FileAttachment FileAttachment = await Context.Channel.UploadFileAsync(image, "pagmanbounce.webp", UploadFileType.Emoji);
