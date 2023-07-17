@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 
 class Program
 {
+    public static readonly bool debug = bool.Parse(Environment.GetEnvironmentVariable("BOT_DEBUG")?? "false") ;
     static void Main(string[] args)
     {
         Start().GetAwaiter().GetResult();
@@ -16,17 +17,18 @@ class Program
     public static RevoltClient Client;
     public static async Task Start()
     {
+        
         string token = Environment.GetEnvironmentVariable("REVOLT_BOT_TOKEN") ?? throw new ArgumentException("No token in enviorment");
         Client = new RevoltClient(token, ClientMode.WebSocket, new ClientConfig
         {
             UserBot = true,
             Debug = new ClientDebugConfig
             {
-                LogRestRequest = true,
-                LogRestRequestJson = true,
-                LogRestResponseJson = true,
-                LogWebSocketError = true,
-                LogWebSocketFull = true
+                LogRestRequest = debug,
+                LogRestRequestJson = debug,
+                LogRestResponseJson = debug,
+                LogWebSocketError = debug,
+                LogWebSocketFull = debug
             }
         });
         await Client.StartAsync();
@@ -77,7 +79,10 @@ public partial class AddEmoteCmd : ModuleBase
         }
         string emoteId = emoteLink.Split("/")[^1];
         string emoteUrl = $"https://cdn.7tv.app/emote/{emoteId}/3x.webp";
-
+        if (Program.debug)
+        {
+            Console.WriteLine(emoteUrl);
+        }
         byte[] image;
         using (var httpClient = new HttpClient())
         using (HttpResponseMessage response = await httpClient.GetAsync(emoteUrl))
