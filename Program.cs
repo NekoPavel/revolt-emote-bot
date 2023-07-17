@@ -2,8 +2,6 @@
 using System.Text.RegularExpressions;
 using RevoltSharp;
 using RevoltSharp.Commands;
-using RevoltSharp.Rest;
-using System.Text.Json;
 using Newtonsoft.Json.Linq;
 
 class Program
@@ -18,7 +16,7 @@ class Program
     public static async Task Start()
     {
 
-        string token = Environment.GetEnvironmentVariable("REVOLT_BOT_TOKEN") ?? throw new ArgumentException("No token in enviorment");
+        string token = Environment.GetEnvironmentVariable("REVOLT_BOT_TOKEN") ?? throw new ArgumentException("No token in enviroment");
         Client = new RevoltClient(token, ClientMode.WebSocket, new ClientConfig
         {
             UserBot = true,
@@ -36,6 +34,9 @@ class Program
         Commands.Service.AddModulesAsync(Assembly.GetEntryAssembly(), null);
 
         await Task.Delay(-1);
+    }
+    public static async Task<bool> EmoteExists(this string emoteName){
+        return false;
     }
     public static async Task<byte[]> GetImage(Uri uri)
     {
@@ -98,6 +99,7 @@ public partial class AddEmoteCmd : ModuleBase
     [Command("yoink")]
     public async Task Yoink([Remainder] string emoteLink)
     {
+        emoteLink = emoteLink.Split(" ")[0];
         if (emoteLink == null)
         {
             await ReplyAsync("You need to provide an emote to yoink! ");
