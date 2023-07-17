@@ -1,7 +1,10 @@
 ﻿using System.Reflection;
+using System.Text.RegularExpressions;
 using RevoltSharp;
 using RevoltSharp.Commands;
 using RevoltSharp.Rest;
+using System.Text.Json;
+using Newtonsoft.Json.Linq;
 
 class Program
 {
@@ -13,12 +16,13 @@ class Program
     public static RevoltClient Client;
     public static async Task Start()
     {
-        Client = new RevoltClient(Environment.GetEnvironmentVariable("REVOLT_BOT_TOKEN"), ClientMode.WebSocket, new ClientConfig
+        string token = Environment.GetEnvironmentVariable("REVOLT_BOT_TOKEN") ?? throw new ArgumentException("No token in enviorment");
+        Client = new RevoltClient(token, ClientMode.WebSocket, new ClientConfig
         {
             UserBot = true
         });
         await Client.StartAsync();
-        CommandHandler Commands = new CommandHandler(Client);
+        CommandHandler Commands = new(Client);
         Commands.Service.AddModulesAsync(Assembly.GetEntryAssembly(), null);
 
         await Task.Delay(-1);
@@ -32,33 +36,72 @@ public class CommandHandler
         client.OnMessageRecieved += Client_OnMessageRecieved;
     }
     public RevoltClient Client;
-    public CommandService Service = new CommandService();
+    public CommandService Service = new();
     private void Client_OnMessageRecieved(Message msg)
     {
-        UserMessage Message = msg as UserMessage;
-        if (Message == null || Message.Author.IsBot)
+        if (msg is not UserMessage Message)
             return;
         int argPos = 0;
         if (!(Message.HasCharPrefix('!', ref argPos) || Message.HasMentionPrefix(Client.CurrentUser, ref argPos)))
             return;
-        CommandContext context = new CommandContext(Client, Message);
-        Service.ExecuteAsync(context, argPos, null);
+        CommandContext context = new(Client, Message);
+        _ = Service.ExecuteAsync(context, argPos, null);
     }
 }
-public class Parent
+public partial class AddEmoteCmd : ModuleBase
 {
-    public string type { get; set; }
-    public string id { get; set; }
-
-}
-public class AddemoteCmd : ModuleBase
-{
-    [Command("addemote")]
-    public async Task Addemote()
+    [Command("yoink")]
+    public async Task Yoink([Remainder] string emoteLink)
     {
-        byte[] image = System.IO.File.ReadAllBytes("pagmanbounce.webp");
-        FileAttachment FileAttachment = await Context.Channel.UploadFileAsync(image, "pagmanbounce.webp", UploadFileType.Emojis);
+        if (emoteLink == null)
+        {
+            await ReplyAsync("You need to provide an emote to yoink! " + Context.User.Username);
+            return;
+        }
+        if (EmoteRegex().Match(emoteLink) == null)
+        {
+            await ReplyAsync("That's not a valid emote! " + Context.User.Username);
+            return;
+        }
+        string emoteId = emoteLink.Split("/")[^1];
+        string emoteUrl = $"https://cdn.7tv.app/emote/{emoteId}/3x.webp";
 
-        Emoji test = await Context.Server.CreateEmojiAsync(FileAttachment.Id, "pagmanbounce", false);
+        byte[] image;
+        using (var httpClient = new HttpClient())
+        using (HttpResponseMessage response = await httpClient.GetAsync("emoteUrl"))
+        {
+            image = await response.Content.ReadAsByteArrayAsync();
+        }
+        Uri emoteInfoUri = new($"https://api.7tv.app/v2/emotes/{emoteId}");
+        string json;
+        string emoteName;
+        using (var httpClient = new HttpClient())
+        using (HttpResponseMessage response = await httpClient.GetAsync(emoteInfoUri))
+        {
+            json = await response.Content.ReadAsStringAsync();
+            
+            dynamic emoteInfo = JObject.Parse(json);
+            emoteName = emoteInfo.name;
+            emoteName = emoteName.ToLower();
+        }
+
+        //byte[] image = File.ReadAllBytes("pagmanbounce.webp");
+        try
+        {
+            await Context.Server.CreateEmojiAsync(image,$"{emoteName}.webp",emoteName);
+            await ReplyAsync($"Yoinked {emoteName} " + Context.User.Username);
+        }
+        catch
+        {
+            await ReplyAsync("Something went wrong while uploading the emote! " + Context.User.Username);
+        }
+        
+        //FileAttachment FileAttachment = await Context.Channel.UploadFileAsync(image, "pagmanbounce.webp", UploadFileType.Emoji);
+
+        //Emoji test = await Context.Server.CreateEmojiAsync(FileAttachment.Id, "pagmanbounce", false);
+
     }
+
+    [GeneratedRegex("^https://7tv\\.app/emotes/[a-z0-9]{24}$")]
+    private static partial Regex EmoteRegex();
 }
