@@ -19,7 +19,15 @@ class Program
         string token = Environment.GetEnvironmentVariable("REVOLT_BOT_TOKEN") ?? throw new ArgumentException("No token in enviorment");
         Client = new RevoltClient(token, ClientMode.WebSocket, new ClientConfig
         {
-            UserBot = true
+            UserBot = true,
+            Debug = new ClientDebugConfig
+            {
+                LogRestRequest = true,
+                LogRestRequestJson = true,
+                LogRestResponseJson = true,
+                LogWebSocketError = true,
+                LogWebSocketFull = true
+            }
         });
         await Client.StartAsync();
         CommandHandler Commands = new(Client);
