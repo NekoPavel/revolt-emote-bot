@@ -7,7 +7,7 @@ using System.Reflection.Metadata;
 
 public class Program
 {
-    public static readonly bool debug = bool.Parse(Environment.GetEnvironmentVariable("BOT_DEBUG")??"False");
+    public static readonly bool debug = bool.Parse(Environment.GetEnvironmentVariable("BOT_DEBUG") ?? "False");
     static void Main(string[] args)
     {
         Start().GetAwaiter().GetResult();
@@ -37,7 +37,8 @@ public class Program
 
         await Task.Delay(-1);
     }
-    public static async Task<bool> EmoteExists(CommandContext context, string emoteName){
+    public static async Task<bool> EmoteExists(CommandContext context, string emoteName)
+    {
         List<Emoji> serverEmojis = (await context.Server.GetEmojisAsync()).ToList();
         return serverEmojis.Exists(x => x.Name.Equals(emoteName));
     }
@@ -47,33 +48,20 @@ public class Program
         using HttpResponseMessage response = await httpClient.GetAsync(uri);
         return await response.Content.ReadAsByteArrayAsync();
     }
-    public static async Task<byte[]> EmoteIdToImage(string emoteId){
-        Uri emoteUrl = new($"https://cdn.7tv.app/emote/{emoteId}/4x.webp");
-        byte[] image = await GetImage(emoteUrl);
-        if (image.Length > 500000)
+    public static async Task<byte[]> EmoteIdToImage(string emoteId)
+    {
+        Uri emoteUrl;
+        byte[] image;
+        for (int i = 4; i > 0; i--)
         {
-            emoteUrl = new($"https://cdn.7tv.app/emote/{emoteId}/3x.webp");
+            emoteUrl = new($"https://cdn.7tv.app/emote/{emoteId}/{i}]x.webp");
             image = await GetImage(emoteUrl);
+            if (image.Length <= 500000)
+            {
+                return image;
+            }
         }
-        if (image.Length > 500000)
-        {
-            emoteUrl = new($"https://cdn.7tv.app/emote/{emoteId}/2x.webp");
-            image = await GetImage(emoteUrl);
-        }
-        if (image.Length > 500000)
-        {
-            emoteUrl = new($"https://cdn.7tv.app/emote/{emoteId}/1x.webp");
-            image = await GetImage(emoteUrl);
-        }
-        if (image.Length > 500000)
-        {
-            throw new Exception("Image too large");
-        }
-        if (debug)
-        {
-            Console.WriteLine("Using following url to get emote: " + emoteUrl);
-        }
-        return image;
+        throw new Exception("Image too large");
     }
 }
 public class CommandHandler
@@ -109,7 +97,8 @@ public partial class AddEmoteCmd : ModuleBase
     {
         string emoteLink = input.Split(" ")[0];
         bool addAnyway = false;
-        if (input.Split(" ").Length > 1) {
+        if (input.Split(" ").Length > 1)
+        {
             bool.TryParse(input.Split(" ")[1], out addAnyway);
         }
         if (emoteLink == null)
@@ -137,7 +126,8 @@ public partial class AddEmoteCmd : ModuleBase
             emoteName = emoteName.ToLower();
         }
 
-        if (await Program.EmoteExists(Context,emoteName) && !addAnyway){
+        if (await Program.EmoteExists(Context, emoteName) && !addAnyway)
+        {
             await ReplyAsync("Emote already exists, if you want to add anyway, call '!yoink <emotelink> True'");
             return;
         }
@@ -152,7 +142,7 @@ public partial class AddEmoteCmd : ModuleBase
             await ReplyAsync(ex.Message);
             return;
         }
-        
+
 
         //byte[] image = File.ReadAllBytes("pagmanbounce.webp");
         try
