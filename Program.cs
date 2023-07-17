@@ -72,7 +72,7 @@ public partial class AddEmoteCmd : ModuleBase
 
         byte[] image;
         using (var httpClient = new HttpClient())
-        using (HttpResponseMessage response = await httpClient.GetAsync("emoteUrl"))
+        using (HttpResponseMessage response = await httpClient.GetAsync(emoteUrl))
         {
             image = await response.Content.ReadAsByteArrayAsync();
         }
