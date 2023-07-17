@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 
 class Program
 {
-    public static readonly bool debug = bool.Parse(Environment.GetEnvironmentVariable("BOT_DEBUG")?? "false") ;
+    public static readonly bool debug = bool.Parse(Environment.GetEnvironmentVariable("BOT_DEBUG")) ;
     static void Main(string[] args)
     {
         Start().GetAwaiter().GetResult();
@@ -77,11 +77,11 @@ public partial class AddEmoteCmd : ModuleBase
             await ReplyAsync("That's not a valid emote! ");
             return;
         }
-        string emoteId = emoteLink.Split("/")[^1];
+        string emoteId = emoteLink.Split("/")[^1].Trim();
         string emoteUrl = $"https://cdn.7tv.app/emote/{emoteId}/3x.webp";
         if (Program.debug)
         {
-            Console.WriteLine(emoteUrl);
+            Console.WriteLine("Log of emoteURL: " + emoteUrl);
         }
         byte[] image;
         using (var httpClient = new HttpClient())
