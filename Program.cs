@@ -3,8 +3,9 @@ using System.Text.RegularExpressions;
 using RevoltSharp;
 using RevoltSharp.Commands;
 using Newtonsoft.Json.Linq;
+using System.Reflection.Metadata;
 
-class Program
+public class Program
 {
     public static readonly bool debug = bool.Parse(Environment.GetEnvironmentVariable("BOT_DEBUG"));
     static void Main(string[] args)
@@ -35,9 +36,10 @@ class Program
 
         await Task.Delay(-1);
     }
-    // public static async Task<bool> EmoteExists(this string emoteName){
-    //     return false;
-    // }
+    public static async Task<bool> EmoteExists(CommandContext context, string emoteName){
+        List<Emoji> serverEmojis = (await context.Server.GetEmojisAsync()).ToList();
+        return serverEmojis.Exists(x => x.Name.Equals(emoteName));
+    }
     public static async Task<byte[]> GetImage(Uri uri)
     {
         using var httpClient = new HttpClient();
@@ -45,8 +47,13 @@ class Program
         return await response.Content.ReadAsByteArrayAsync();
     }
     public static async Task<byte[]> EmoteIdToImage(string emoteId){
-        Uri emoteUrl = new($"https://cdn.7tv.app/emote/{emoteId}/3x.webp");
+        Uri emoteUrl = new($"https://cdn.7tv.app/emote/{emoteId}/4x.webp");
         byte[] image = await GetImage(emoteUrl);
+        if (image.Length > 500000)
+        {
+            emoteUrl = new($"https://cdn.7tv.app/emote/{emoteId}/3x.webp");
+            image = await GetImage(emoteUrl);
+        }
         if (image.Length > 500000)
         {
             emoteUrl = new($"https://cdn.7tv.app/emote/{emoteId}/2x.webp");
@@ -97,9 +104,10 @@ public partial class AddEmoteCmd : ModuleBase
         await ReplyAsync("Pong");
     }
     [Command("yoink")]
-    public async Task Yoink([Remainder] string emoteLink)
+    public async Task Yoink([Remainder] string input)
     {
-        emoteLink = emoteLink.Split(" ")[0];
+        string emoteLink = input.Split(" ")[0];
+        bool.TryParse(input.Split(" ")[1], out bool addAnyway);
         if (emoteLink == null)
         {
             await ReplyAsync("You need to provide an emote to yoink! ");
@@ -110,17 +118,8 @@ public partial class AddEmoteCmd : ModuleBase
             await ReplyAsync("That's not a valid emote! ");
             return;
         }
+
         string emoteId = emoteLink.Split("/")[^1].Trim();
-        byte[] image;
-        try
-        {
-            image = await Program.EmoteIdToImage(emoteId);
-        }
-        catch (Exception ex)
-        {
-            await ReplyAsync(ex.Message);
-            return;
-        }
         Uri emoteInfoUri = new($"https://api.7tv.app/v2/emotes/{emoteId}");
         string json;
         string emoteName;
@@ -133,6 +132,23 @@ public partial class AddEmoteCmd : ModuleBase
             emoteName = emoteInfo.name;
             emoteName = emoteName.ToLower();
         }
+
+        if (await Program.EmoteExists(Context,emoteName) && !addAnyway){
+            await ReplyAsync("Emote already exists, if you want to add anyway, call '!yoink <emotelink> True'");
+            return;
+        }
+
+        byte[] image;
+        try
+        {
+            image = await Program.EmoteIdToImage(emoteId);
+        }
+        catch (Exception ex)
+        {
+            await ReplyAsync(ex.Message);
+            return;
+        }
+        
 
         //byte[] image = File.ReadAllBytes("pagmanbounce.webp");
         try
