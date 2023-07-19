@@ -17,7 +17,7 @@ public class Program
     public static async Task Start()
     {
 
-        Environment.SetEnvironmentVariable("REVOLT_BOT_TOKEN", "ONqeoPMOF-TiKj0zG9CskOlrxy4-div8_QHKxth57r80SFdtfZNJTQqqOR5duvMP");
+        // Environment.SetEnvironmentVariable("REVOLT_BOT_TOKEN", "ONqeoPMOF-TiKj0zG9CskOlrxy4-div8_QHKxth57r80SFdtfZNJTQqqOR5duvMP"); lol old leaked token
         string token = Environment.GetEnvironmentVariable("REVOLT_BOT_TOKEN") ?? throw new ArgumentException("No token in enviroment");
         Client = new RevoltClient(token, ClientMode.WebSocket, new ClientConfig
         {
